@@ -381,12 +381,6 @@ namespace le
 		{
 			return(std::get<N>(_components).emplace_back(std::forward<Args>(args)...));
 		}
-
-		template<typename T, typename... Args>
-		constexpr auto emplace_t_back(Args&&... args) -> auto&
-		{
-			return emplace_t_back<index_of<T>>(std::forward<Args>(args)...);
-		}
 	private:
 		std::tuple<Container<Types>...> _components{};
 	};
