@@ -113,21 +113,6 @@ namespace le
 			}
 		};
 
-		template<typename T, typename... Ts>
-		class type_iterator final
-			: public BaseAoSIterator<type_iterator<T, Ts...>, std::tuple<T, Ts...>, std::tuple<T&, Ts&...>>
-		{
-		public:
-			using Base = BaseAoSIterator<type_iterator<T, Ts...>, std::tuple<T, Ts...>, std::tuple<T&, Ts&...>>;
-
-			using Base::BaseAoSIterator;
-
-			auto operator*() const -> typename Base::reference
-			{
-				return Base::_owner->template at<T, Ts...>(Base::_index);
-			}
-		};
-
 		template<size_t index, size_t... others>
 		struct iterator_for
 		{
