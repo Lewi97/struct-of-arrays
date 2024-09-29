@@ -146,7 +146,7 @@ namespace le
 		template<size_t N, typename T, typename... Args>
 		constexpr auto emplace(size_t at, Args&&... args) -> T&
 		{
-			return std::get<N>(_components).at(at) = T(std::forward<Args>(args)...);
+			return container_at<N>().at(at) = T(std::forward<Args>(args)...);
 		}
 
 		template<typename T, typename... Args>
@@ -209,7 +209,7 @@ namespace le
 		{
 			if constexpr (sizeof...(Ts) == 0)
 			{
-				return std::get<Container<T>>(_components).at(idx);
+				return container_at<index_of<T>>().at(idx);
 			}
 			else
 			{
@@ -222,7 +222,7 @@ namespace le
 		{
 			if constexpr (sizeof...(indices) == 0)
 			{
-				return std::get<index>(_components).at(idx);
+				return container_at<index>().at(idx);
 			}
 			else
 			{
@@ -278,8 +278,8 @@ namespace le
 				});
 		}
 
-		constexpr auto size() const -> size_t { return std::get<0>(_components).size(); }
-		constexpr auto empty() const -> bool { return std::get<0>(_components).empty(); }
+		constexpr auto size() const -> size_t { return container_at<0>().size(); }
+		constexpr auto empty() const -> bool { return container_at<0>().empty(); }
 
 		template<size_t... indices>
 		auto erase(iterator<indices...> iter) -> iterator<indices...>
@@ -304,7 +304,7 @@ namespace le
 			}
 			else if constexpr (sizeof...(indices) == 1)
 			{
-				return std::get<indices...>(_components).begin();
+				return container_at<indices...>().begin();
 			}
 			else
 			{
@@ -323,7 +323,7 @@ namespace le
 			}
 			else if constexpr (sizeof...(indices) == 1)
 			{
-				return std::get<indices...>(_components).end();
+				return container_at<indices...>().end();
 			}
 			else
 			{
@@ -346,13 +346,13 @@ namespace le
 		template<typename T>
 		auto rbegin()
 		{
-			return std::get<Container<T>>(_components).rbegin();
+			return container_at<index_of<T>>().rbegin();
 		}
 
 		template<typename T>
 		auto rend()
 		{
-			return std::get<Container<T>>(_components).rend();
+			return container_at<index_of<T>>().rend();
 		}
 
 		template<size_t... indices>
@@ -377,6 +377,12 @@ namespace le
 			return each<index_of<T>, index_of<Ts>...>();
 		}
 	private:
+		template<size_t index>
+		constexpr auto container_at(this auto&& self) -> decltype(auto)
+		{
+			return std::get<Container<Nth<index>>>(std::forward<decltype(self)>(self)._components);
+		}
+
 		constexpr auto for_each_container(auto invocable) -> void
 		{
 			std::apply([&](Container<Types>&... containers)
