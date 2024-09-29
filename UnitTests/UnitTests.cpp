@@ -88,3 +88,74 @@ TEST(array_of_structs, iteration)
 		ASSERT_EQ(std::to_string(static_cast<int>(f)), string);
 	}
 }
+
+template<typename T>
+concept const_ref = std::is_const_v<std::remove_reference_t<T>> and std::is_reference_v<T>;
+
+TEST(array_of_structs, at_correctness)
+{
+	auto aos = StructOfArrays<int, int, float, double>();
+
+	aos.emplace_back(1, 2, 3.f, 4.0);
+
+	{
+		/* Mix and match indices */
+		auto [i, f, i2] = aos.at<0, 2, 1>(0);
+		ASSERT_EQ(i, 1);
+		ASSERT_EQ(f, 3.f);
+		ASSERT_EQ(i2, 2);
+
+		static_assert(std::is_reference_v<decltype(i)>);
+		static_assert(std::is_reference_v<decltype(f)>);
+		static_assert(std::is_reference_v<decltype(i2)>);
+	}
+	{
+		/* Mix and match typenames of isolated types */
+		auto [d, f] = aos.at<double, float>(0);
+		ASSERT_EQ(d, 4.0);
+		ASSERT_EQ(f, 3.f);
+
+		static_assert(std::is_reference_v<decltype(f)>);
+		static_assert(std::is_reference_v<decltype(d)>);
+	}
+	{
+		/* Get isolated types by typename */
+		decltype(auto) f = aos.at<float>(0);
+		ASSERT_EQ(f, 3.f);
+
+		static_assert(std::is_reference_v<decltype(f)>);
+	}
+	/* Constness */
+	{
+		decltype(auto) i2 = std::as_const(aos).at<1>(0);
+		
+		ASSERT_EQ(i2, 2);
+		
+		static_assert(const_ref<decltype(i2)>);
+	}
+	{
+		decltype(auto) f = std::as_const(aos).at<float>(0);
+
+		ASSERT_EQ(f, 3.f);
+
+		static_assert(const_ref<decltype(f)>);
+	}
+	{
+		auto [i, f, i2] = std::as_const(aos).at<0, 2, 1>(0);
+		ASSERT_EQ(i, 1);
+		ASSERT_EQ(f, 3.f);
+		ASSERT_EQ(i2, 2);
+
+		static_assert(const_ref<decltype(i)>);
+		static_assert(const_ref<decltype(f)>);
+		static_assert(const_ref<decltype(i2)>);
+	}
+	{
+		auto [d, f] = std::as_const(aos).at<double, float>(0);
+		ASSERT_EQ(d, 4.0);
+		ASSERT_EQ(f, 3.f);
+
+		static_assert(const_ref<decltype(f)>);
+		static_assert(const_ref<decltype(d)>);
+	}
+}
