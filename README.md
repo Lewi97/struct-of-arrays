@@ -1,45 +1,59 @@
 # StructofArrays
 A dependency-less struct of arrays type.
 
-Example usage:
 ```cpp
-auto aos = StructOfArrays<int, float, std::string>();
-
-aos.resize(10);
-
-/* Use single type each in range functions */
-std::ranges::generate(aos.each<int>(), [i = 0]() mutable { return i++; });
-
-/* Iterate all */
-for (auto test{ 0 }; auto [i, f, s] : aos.each())
+int main()
 {
-  ASSERT_EQ(i, test);
-  s = std::to_string(test);
-  test++;
+	auto types = StructOfArrays<int, int, float, std::string>();
+
+	{
+		/* Emplacing objects is simple */
+		auto [i, i2, f, str] = types.emplace_back(0, 1, 2.f, "Hello"s);
+		
+		/* Returned are references to the emplaced objects */
+		i2 = 5;
+
+		/* Get duplicate types by index */
+		assert(types.at<1>(0) == 5);
+
+		/* Non duplicates can be gotten by typename */
+		assert(types.at<std::string>(0) == "Hello");
+	}
+
+	{
+		/* Can also emplace a single type if the other types are default constructible */
+		types.emplace_back<std::string>("world");
+
+		assert(types.at<std::string>(1) == "world");
+
+		/* The other types are default constructed */
+		assert(types.at<float>(1) == float{});
+
+		/* Others can be emplaced at the given index */
+		types.emplace<float>(1, 5.f);
+		assert(types.at<float>(1) == 5.f);
+	}
+
+	{
+		/* The array is iterable in a normal for loop */
+		for (auto [x, y] : types.each<0, 1>())
+		{
+			/* Busy work */
+		}
+
+		for (auto [f, str] : types.each<float, std::string>())
+		{
+			/* Busy work */
+		}
+
+		types.for_each([](int, int, float, std::string)
+			{
+				/* More busy work */
+			});
+	}
+
+	return 0;
 }
+```
 
-/* Iterate by type index */
-for (auto [i, s] : aos.each<0, 2>())
-{
-  ASSERT_EQ(std::to_string(i), s);
-}
-
-/* Iterate over single type */
-for (auto i{ 0.f }; auto& f : aos.each<float>())
-{
-  f = i++;
-}
-
-/* Iterate over single type by index */
-for (auto i{ 0.f }; auto& f : aos.each<1>())
-{
-  ASSERT_EQ(f, i++);
-}
-
-/* Iterate over multiple types through their typenames */
-for (auto [f, string] : aos.each<float, std::string>())
-{
-  ASSERT_EQ(std::to_string(static_cast<int>(f)), string);
-}```
-
-The unit test files show more usage.
+The unit test files contain more usage examples.
