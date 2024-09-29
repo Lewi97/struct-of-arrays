@@ -71,6 +71,11 @@ namespace le
 				return Derived(*_owner, _index + delta);
 			}
 
+			auto operator-(const BaseAoSIterator& other) -> difference_type
+			{
+				return index() - other.index();
+			}
+
 			auto operator==(const Derived& other) const -> bool
 			{
 				return other._index == _index and other._owner == _owner;
@@ -224,6 +229,32 @@ namespace le
 		constexpr auto at(this auto&& self, size_t idx) -> decltype(auto)
 		{
 			return std::forward<decltype(self)>(self).template at<index_of<T>, index_of<Ts>...>(idx);
+		}
+
+		template<size_t... indices>
+		constexpr auto back(this auto&& self) -> decltype(auto)
+		{
+			using Self = decltype(self);
+			decltype(auto) self_ = std::forward<Self>(self);
+			return self_.template at<indices...>(self_.size() - 1);
+		}
+
+		template<typename T, typename... Ts>
+		constexpr auto back(this auto&& self) -> decltype(auto)
+		{
+			return std::forward<decltype(self)>(self).template back<index_of<T>, index_of<Ts>...>();
+		}
+
+		template<size_t... indices>
+		constexpr auto front(this auto&& self) -> decltype(auto)
+		{
+			return std::forward<decltype(self)>(self).template at<indices...>(0);
+		}
+
+		template<typename T, typename... Ts>
+		constexpr auto front(this auto&& self) -> decltype(auto)
+		{
+			return std::forward<decltype(self)>(self).template front<index_of<T>, index_of<Ts>...>();
 		}
 
 		template<size_t... indices>
