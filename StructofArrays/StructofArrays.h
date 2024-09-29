@@ -228,7 +228,6 @@ namespace le
 
 		template<size_t... indices>
 		constexpr auto for_each(auto invocable)
-			//requires (std::same_as<Nth<indices>, std::remove_cvref_t<Args>> and ...)
 		{
 			for (auto i{ 0 }; i < size(); i++)
 			{
