@@ -281,9 +281,9 @@ namespace le
 		{ 
 			if constexpr (sizeof...(indices) == 0)
 			{
-				return[this]<size_t... indices>(std::index_sequence<indices...>)
+				return[this]<size_t... lambda_indices>(std::index_sequence<lambda_indices...>)
 				{
-					return begin<indices...>();
+					return begin<lambda_indices...>();
 				}(std::make_index_sequence<elements>{});
 			}
 			else if constexpr (sizeof...(indices) == 1)
