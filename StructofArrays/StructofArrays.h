@@ -142,11 +142,11 @@ namespace le
 			return container_at<index_of<T>>().at(at) = T(std::forward<Args>(args)...);
 		}
 
-		constexpr auto emplace_back(Types&&... types) -> auto
+		constexpr auto emplace_back(Types... types) -> auto
 		{
 			return std::apply([&](auto&... container)
 				{
-					return RefData(container.emplace_back(std::forward<decltype(types)>(types))...);
+					return RefData(container.emplace_back(types)...);
 				}, _components);
 		}
 
