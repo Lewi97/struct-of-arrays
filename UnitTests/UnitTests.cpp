@@ -14,7 +14,7 @@
 using namespace std::string_literals;
 using namespace le;
 
-TEST(array_of_structs, emplacing)
+TEST(struct_of_arrays, emplacing)
 {
 	auto aos = StructOfArrays<int, float, std::string>();
 	
@@ -47,7 +47,7 @@ TEST(array_of_structs, emplacing)
 	ASSERT_EQ(aos.at<int>(4), 15);
 }
 
-TEST(array_of_structs, iteration)
+TEST(struct_of_arrays, iteration)
 {
 	auto aos = StructOfArrays<int, float, std::string>();
 
@@ -92,7 +92,7 @@ TEST(array_of_structs, iteration)
 template<typename T>
 concept const_ref = std::is_const_v<std::remove_reference_t<T>> and std::is_reference_v<T>;
 
-TEST(array_of_structs, at_correctness)
+TEST(struct_of_arrays, at_correctness)
 {
 	auto aos = StructOfArrays<int, int, float, double>();
 
