@@ -144,7 +144,10 @@ namespace le
 
 		constexpr auto emplace_back(Types&&... types) -> auto
 		{
-			return RefData(emplace_t_back<Types>(std::forward<decltype(types)>(types))...);
+			return std::apply([&](auto&... container)
+				{
+					return RefData(container.emplace_back(std::forward<decltype(types)>(types))...);
+				}, _components);
 		}
 
 		template<typename T, typename... Args>
@@ -208,19 +211,19 @@ namespace le
 			}
 			else if constexpr (sizeof...(indices) == 1)
 			{
-				return std::forward<Self>(self).container_at<indices...>().at(idx);
+				return std::forward<Self>(self).template container_at<indices...>().at(idx);
 			}
 			else
 			{
 				using RetType = std::conditional_t<is_const, AsConstRefTuple<Nth<indices>...>, AsRefTuple<Nth<indices>...>>;
-				return RetType(std::forward<Self>(self).at<indices>(idx)...);
+				return RetType(std::forward<Self>(self).template at<indices>(idx)...);
 			}
 		}
 
 		template<typename T, typename... Ts>
 		constexpr auto at(this auto&& self, size_t idx) -> decltype(auto)
 		{
-			return std::forward<decltype(self)>(self).at<index_of<T>, index_of<Ts>...>(idx);
+			return std::forward<decltype(self)>(self).template at<index_of<T>, index_of<Ts>...>(idx);
 		}
 
 		template<size_t... indices>
@@ -362,7 +365,7 @@ namespace le
 		template<size_t index>
 		constexpr auto container_at(this auto&& self) -> decltype(auto)
 		{
-			return std::get<Container<Nth<index>>>(std::forward<decltype(self)>(self)._components);
+			return std::get<index>(std::forward<decltype(self)>(self)._components);
 		}
 
 		constexpr auto for_each_container(auto invocable) -> void
@@ -382,7 +385,7 @@ namespace le
 		template<typename T, typename... Args>
 		constexpr auto emplace_t_back(Args&&... args) -> auto&
 		{
-			return(std::get<Container<std::remove_cvref_t<T>>>(_components).emplace_back(std::forward<Args>(args)...));
+			return emplace_t_back<index_of<T>>(std::forward<Args>(args)...);
 		}
 	private:
 		std::tuple<Container<Types>...> _components{};
