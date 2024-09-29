@@ -159,3 +159,42 @@ TEST(struct_of_arrays, at_correctness)
 		static_assert(const_ref<decltype(d)>);
 	}
 }
+
+TEST(struct_of_arrays, erasing)
+{
+	auto aos = StructOfArrays<int, int>();
+		
+	for (auto i : std::views::iota(0, 100))
+	{
+		aos.emplace_back(i, i);
+	}
+
+	ASSERT_EQ(aos.size(), 100);
+	ASSERT_EQ(aos.front<0>(), 0);
+	ASSERT_EQ(aos.back<0>(), 99);
+
+	aos.erase(aos.begin());
+
+	ASSERT_EQ(aos.size(), 99);
+	ASSERT_EQ(aos.front<0>(), 1);
+
+	auto erase_pred = [](auto p)
+		{
+			return p < 50;
+		};
+
+	auto erase_pred_tuple = [erase_pred](auto p)
+		{
+			return erase_pred(std::get<0>(p));
+		};
+
+	auto to_erase = std::ranges::count_if(aos.each<0>(), erase_pred);
+	auto old_size = aos.size();
+
+	auto i = aos.erase(std::remove_if(aos.begin(), aos.end(), erase_pred_tuple), aos.end());
+
+	ASSERT_EQ(aos.size(), old_size - to_erase);
+	ASSERT_EQ(aos.front<0>(), 50);
+
+	aos.pop_back();
+}
