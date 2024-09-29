@@ -277,6 +277,17 @@ namespace le
 		}
 
 		template<size_t... indices>
+		auto erase(iterator<indices...> first, iterator<indices...> last) -> iterator<indices...>
+		{
+			std::apply([&](auto&... containers)
+				{
+					(containers.erase(std::next(containers.begin(), first.index()), std::next(containers.begin(), last.index())), ...);
+				}, _components);
+
+			return first;
+		}
+
+		template<size_t... indices>
 		auto begin() 
 		{ 
 			if constexpr (sizeof...(indices) == 0)
@@ -300,9 +311,9 @@ namespace le
 		{ 
 			if constexpr (sizeof...(indices) == 0)
 			{
-				return[this]<size_t... indices>(std::index_sequence<indices...>)
+				return[this]<size_t... lambda_indices>(std::index_sequence<lambda_indices...>)
 				{
-					return end<indices...>();
+					return end<lambda_indices...>();
 				}(std::make_index_sequence<elements>{});
 			}
 			else if constexpr (sizeof...(indices) == 1)
