@@ -149,7 +149,7 @@ namespace le
 		constexpr auto emplace_back(Args&&... args) -> auto&
 			requires ((std::same_as<T, Types> or std::is_default_constructible_v<Types>) and ...)
 		{
-			return emplace_back<tuple_element_index_v<T, Data>, Args...>(std::forward<Args>(args)...);
+			return emplace_back<index_of<T>, Args...>(std::forward<Args>(args)...);
 		}
 
 		template<size_t index, typename... Args>
