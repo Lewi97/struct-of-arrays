@@ -33,6 +33,12 @@ namespace le
 		using First = Nth<0>;
 		using Last = Nth<elements - 1>;
 
+		template<size_t index>
+		using IteratorFor = typename Container<Nth<index>>::iterator;
+
+		template<typename T>
+		static constexpr auto index_of = tuple_element_index_v<T, Data>;
+
 		template<typename Derived, typename Value, typename Reference>
 		class BaseAoSIterator
 		{
@@ -284,6 +290,10 @@ namespace le
 					return begin<indices...>();
 				}(std::make_index_sequence<elements>{});
 			}
+			else if constexpr (sizeof...(indices) == 1)
+			{
+				return std::get<indices...>(_components).begin();
+			}
 			else
 			{
 				return iterator<indices...>(*this, 0); 
@@ -299,6 +309,10 @@ namespace le
 					return end<indices...>();
 				}(std::make_index_sequence<elements>{});
 			}
+			else if constexpr (sizeof...(indices) == 1)
+			{
+				return std::get<indices...>(_components).end();
+			}
 			else
 			{
 				return iterator<indices...>(*this, size()); 
@@ -308,27 +322,13 @@ namespace le
 		template<typename T, typename... Ts>
 		auto begin() 
 		{ 
-			if constexpr (sizeof...(Ts) == 0)
-			{
-				return std::get<Container<T>>(_components).begin();
-			}
-			else
-			{
-				return type_iterator<T, Ts...>(*this, 0);
-			}
+			return begin<index_of<T>, index_of<Ts>...>();
 		}
 
 		template<typename T, typename... Ts>
 		auto end() 
 		{ 
-			if constexpr (sizeof...(Ts) == 0)
-			{
-				return std::get<Container<T>>(_components).end();
-			}
-			else
-			{
-				return type_iterator<T, Ts...>(*this, size());
-			}
+			return end<index_of<T>, index_of<Ts>...>();
 		}
 
 		template<typename T>
@@ -355,7 +355,7 @@ namespace le
 			}
 			else if constexpr (sizeof...(indices) == 1)
 			{
-				return each<Nth<indices...>>();
+				return Iterable<IteratorFor<indices...>>(begin<indices...>(), end<indices...>());
 			}
 			else
 			{
@@ -366,14 +366,7 @@ namespace le
 		template<typename T, typename... Ts>
 		auto each() 
 		{
-			if constexpr (sizeof...(Ts) == 0)
-			{
-				return Iterable<typename Container<T>::iterator>(begin<T>(), end<T>());
-			}
-			else
-			{
-				return Iterable<type_iterator<T, Ts...>>(begin<T, Ts...>(), end<T, Ts...>());
-			}
+			return each<index_of<T>, index_of<Ts>...>();
 		}
 	private:
 		constexpr auto for_each_container(auto invocable) -> void
