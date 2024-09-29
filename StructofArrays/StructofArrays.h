@@ -139,7 +139,7 @@ namespace le
 		template<typename T, typename... Args>
 		constexpr auto emplace(size_t at, Args&&... args) -> T&
 		{
-			return std::get<T>(_components).at(at) = T(std::forward<Args>(args)...);
+			return container_at<index_of<T>>().at(at) = T(std::forward<Args>(args)...);
 		}
 
 		constexpr auto emplace_back(Types&&... types) -> auto
