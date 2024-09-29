@@ -20,8 +20,10 @@ namespace le
 		using Data = std::tuple<Types...>;
 		template<typename... Ts>
 		using AsRefTuple = std::tuple<Ts&...>;
-		using RefData = AsRefTuple<Types...>;
+		template<typename... Ts>
+		using AsConstRefTuple = std::tuple<const Ts&...>;
 
+		using RefData = AsRefTuple<Types...>;
 		using ConstRefData = std::tuple<const Types&...>;
 
 		template<typename T>
@@ -189,41 +191,36 @@ namespace le
 				});
 		}
 
-		template<typename T, typename... Ts>
-		constexpr auto at(size_t idx) -> decltype(auto)
+		template<size_t... indices>
+		constexpr auto at(this auto&& self, size_t idx) -> decltype(auto)
 		{
-			if constexpr (sizeof...(Ts) == 0)
-			{
-				return container_at<index_of<T>>().at(idx);
-			}
-			else
-			{
-				return AsRefTuple<T, Ts...>(at<T>(idx), at<Ts>(idx)...);
-			}
-		}
+			using Self = decltype(self);
+			using DecayedSelf = std::remove_reference_t<Self>;
 
-		template<size_t index, size_t... indices>
-		constexpr auto at(size_t idx) -> decltype(auto)
-		{
+			constexpr auto is_const = std::is_const_v<DecayedSelf>;
 			if constexpr (sizeof...(indices) == 0)
 			{
-				return container_at<index>().at(idx);
+				using RetType = std::conditional_t<is_const, ConstRefData, RefData>;
+				return std::apply([&](auto&... containers) -> RetType
+					{
+						return RetType(containers.at(idx)...);
+					}, std::forward<Self>(self)._components);
+			}
+			else if constexpr (sizeof...(indices) == 1)
+			{
+				return std::forward<Self>(self).container_at<indices...>().at(idx);
 			}
 			else
 			{
-				return AsRefTuple<Nth<index>, Nth<indices>...>(at<index>(idx), at<indices>(idx)...);
+				using RetType = std::conditional_t<is_const, AsConstRefTuple<Nth<indices>...>, AsRefTuple<Nth<indices>...>>;
+				return RetType(std::forward<Self>(self).at<indices>(idx)...);
 			}
 		}
 
-		template<typename Self>
-		constexpr auto at(this Self&& self, size_t idx) -> decltype(auto)
+		template<typename T, typename... Ts>
+		constexpr auto at(this auto&& self, size_t idx) -> decltype(auto)
 		{
-			using DecayedSelf = std::remove_reference_t<Self>;
-			using RetType = std::conditional_t<std::is_const_v<DecayedSelf>, ConstRefData, RefData>;
-			return std::apply([&](auto&... containers) -> RetType
-				{
-					return RetType(containers.at(idx)...);
-				}, std::forward<Self>(self)._components);
+			return std::forward<decltype(self)>(self).at<index_of<T>, index_of<Ts>...>(idx);
 		}
 
 		template<size_t... indices>
