@@ -33,9 +33,6 @@ namespace le
 		using First = Nth<0>;
 		using Last = Nth<elements - 1>;
 
-		template<size_t index>
-		using IteratorFor = typename Container<Nth<index>>::iterator;
-
 		template<typename T>
 		static constexpr auto index_of = tuple_element_index_v<T, Data>;
 
@@ -130,6 +127,21 @@ namespace le
 				return Base::_owner->template at<T, Ts...>(Base::_index);
 			}
 		};
+
+		template<size_t index, size_t... others>
+		struct iterator_for
+		{
+			using type = iterator<index, others...>;
+		};
+
+		template<size_t index>
+		struct iterator_for<index>
+		{
+			using type = typename Container<Nth<index>>::iterator;
+		};
+
+		template<size_t index, size_t... indices>
+		using iterator_for_t = typename iterator_for<index, indices...>::type;
 
 		template<size_t N, typename T, typename... Args>
 		constexpr auto emplace(size_t at, Args&&... args) -> T&
@@ -296,7 +308,7 @@ namespace le
 			}
 			else
 			{
-				return iterator<indices...>(*this, 0); 
+				return iterator_for_t<indices...>(*this, 0);
 			}
 		}
 		template<size_t... indices>
@@ -315,7 +327,7 @@ namespace le
 			}
 			else
 			{
-				return iterator<indices...>(*this, size()); 
+				return iterator_for_t<indices...>(*this, size());
 			}
 		}
 
@@ -353,13 +365,9 @@ namespace le
 					return each<lambda_indices...>();
 				}(std::make_index_sequence<elements>{});
 			}
-			else if constexpr (sizeof...(indices) == 1)
-			{
-				return Iterable<IteratorFor<indices...>>(begin<indices...>(), end<indices...>());
-			}
 			else
 			{
-				return Iterable<iterator<indices...>>(begin<indices...>(), end<indices...>()); 
+				return Iterable<iterator_for_t<indices...>>(begin<indices...>(), end<indices...>());
 			}
 		}
 
