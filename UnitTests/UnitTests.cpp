@@ -166,7 +166,7 @@ TEST(struct_of_arrays, erasing)
 		
 	for (auto i : std::views::iota(0, 100))
 	{
-		aos.emplace_back(i, i);
+		aos.emplace_back(i, 100 - i);
 	}
 
 	ASSERT_EQ(aos.size(), 100);
@@ -197,4 +197,5 @@ TEST(struct_of_arrays, erasing)
 	ASSERT_EQ(aos.front<0>(), 50);
 
 	aos.pop_back();
+	ASSERT_EQ(aos.back<0>(), 98);
 }
